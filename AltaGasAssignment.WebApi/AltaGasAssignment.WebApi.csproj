@@ -9,9 +9,15 @@
   <ItemGroup>
     <Folder Include="Application\Validator\" />
     <Folder Include="Application\Services\" />
-    <Folder Include="Data\Entities\" />
     <Folder Include="Data\Configuration\" />
-    <Folder Include="Data\Enums\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.2" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.2">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
   </ItemGroup>
 
 </Project>
