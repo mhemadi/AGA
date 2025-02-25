@@ -1,6 +1,11 @@
 ﻿namespace AltaGasAssignment.WebApi.Endpoints
 {
-    public class TripEndpoints
+    public static class TripEndpoints
     {
+        public static IEndpointRouteBuilder MapTripEndpoints(this IEndpointRouteBuilder routes)
+        {
+
+            return routes;
+        }
     }
 }
