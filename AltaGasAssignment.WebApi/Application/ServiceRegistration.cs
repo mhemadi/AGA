@@ -1,5 +1,8 @@
-﻿using AltaGasAssignment.WebApi.Application.Services;
+﻿using AltaGasAssignment.Shared.DTOs;
+using AltaGasAssignment.WebApi.Application.Services;
+using AltaGasAssignment.WebApi.Application.Validator;
 using AltaGasAssignment.WebApi.Data;
+using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 
 namespace AltaGasAssignment.WebApi.Application
@@ -15,6 +18,9 @@ namespace AltaGasAssignment.WebApi.Application
             //TODO: Consider using interfaces
             services.AddScoped<FileUploadService>();
             services.AddScoped<EquipmentEventProcessor>();
+            services.AddScoped<TripService>();
+
+            services.AddScoped<IValidator<TripListRequestDto>, TripListRequestDtoValidator>();
 
             return services;
         }
