@@ -238,6 +238,8 @@
 
 	private async Task ShowTripEvents(Guid tripId)
 	{
+		//TODO: Handle error
+		//TODO: Handle delay
 		currentTripEvents = await Http.GetFromJsonAsync<TripEventListResponseDto>($"trips/{tripId}/events");
 		showEventsModal = true;
 	}
