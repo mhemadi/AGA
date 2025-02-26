@@ -9,9 +9,22 @@ namespace AltaGasAssignment.WebApi.Application.Services
     /// Processes a file containing equipment events and stores the data in the database
     /// The public methods must be called in order. Load, Process and save
     /// </summary>
-     
 
     //TODO: Refactor this class into smaller components
+
+    //The way this class is designed is to handle perhaps up to a few thousand records (10000) in one file.
+    //All the data is stored in the database in one transaction and it would be best to keep the transaction
+    //as short as possible
+
+    //The ideal way to implement this event processor with the capability to handle large files, is to read the
+    //file as a stream (will need to process, sort and save it first) and save each trip (or a few of them)
+    //in the same transaction and move to the next batch.
+    //This method will not keep the atomicity of the upload/process procedure and ideally we would like to
+    //keep the atomicity feature as half-imported events can cause unexpected issues.
+
+    //There are ways to have both the batch processing and the atomic transaction but it can get very
+    //complicated to implement
+
     public class EquipmentEventProcessor
     {
         private readonly AppDbContext _dbContext;
@@ -22,6 +35,8 @@ namespace AltaGasAssignment.WebApi.Application.Services
         private Dictionary<int, TimeZoneInfo> cityTimeZoneMap = new();
         private Dictionary<int, City> cityMap = new();
         private Dictionary<string, EquipmentEventType> eventTypeMap = new();
+
+        private const int MaxEvents = 10000;
 
         public EquipmentEventProcessor(AppDbContext dbContext, ILogger<EquipmentEventProcessor> logger)
         {
@@ -36,6 +51,14 @@ namespace AltaGasAssignment.WebApi.Application.Services
             if (!fileLoaded)
             {
                 return (false, "Failed to load uploaded file");
+            }
+
+            if(fileLines?.Length > MaxEvents)
+            {
+                _logger.LogError("Max allowed events is {MaxEvents} but the number of event in " +
+                    "file {FileId} is {EventCount}", MaxEvents, fileId, fileLines?.Length - 1);
+
+                return (false, "Number of events is too large to handle");
             }
 
             var cityLoaded = await LoadCities();
