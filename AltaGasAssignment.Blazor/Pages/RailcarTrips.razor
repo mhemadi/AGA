@@ -1,0 +1,243 @@
+﻿@page "/"
+@page "/RailcarTrips"
+
+<PageTitle>Railcar Trips</PageTitle>
+
+
+@using System.Net.Http.Json
+@using AltaGasAssignment.Shared.Constants
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Components.Forms
+
+@using AltaGasAssignment.Shared.DTOs
+@using AltaGasAssignment.Shared.Enums
+
+<h3>Upload & Process CSV</h3>
+
+<div class="mb-3">
+    <InputFile class="form-control" OnChange="OnFileChange" />
+    <button class="btn btn-primary mt-2" @onclick="UploadAndProcessFile" disabled="@(!canUpload)">
+        Upload & Process
+    </button>
+</div>
+
+@if (!string.IsNullOrEmpty(uploadStatusMessage))
+{
+    <p><strong>Status:</strong> @uploadStatusMessage</p>
+}
+
+<hr />
+
+<h3>Trips</h3>
+<div class="d-flex align-items-center mb-3">
+    <label>Sort By: </label>
+    <select class="form-select select-width" @onchange="OnOrderChanged">
+        <option value="@TripListRequestOrderBy.EquipmentIdAZ">Equipment ID (A-Z)</option>
+        <option value="@TripListRequestOrderBy.RecentStartDate">Most Recent Start Date</option>
+        <option value="@TripListRequestOrderBy.RecentEndDate">Most Recent End Date</option>
+        <option value="@TripListRequestOrderBy.ShortestTrip">Shortest Trip</option>
+        <option value="@TripListRequestOrderBy.LongestTrip">Longest Trip</option>
+    </select>
+</div>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Equipment</th>
+            <th>Origin City</th>
+            <th>Destination City</th>
+            <th>Start Date</th>
+            <th>End Date</th>
+            <th>Total Trip Hours</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (tripListResponse?.Trips != null)
+        {
+            foreach (var t in tripListResponse.Trips)
+            {
+                <tr>
+                    <td>@t.EquipmentId</td>
+                    <td>@t.OriginCityName</td>
+                    <td>@t.DestinationCityName</td>
+                    <td>@t.StartDate</td>
+                    <td>@t.EndDate</td>
+                    <td>@t.TotalTripHours</td>
+                    <td>
+                        <button class="btn btn-outline-primary" @onclick="() => ShowTripEvents(t.Id)">
+                            See Events
+                        </button>
+                    </td>
+                </tr>
+            }
+        }
+    </tbody>
+</table>
+
+<!-- Pagination Controls -->
+<div class="pagination-controls">
+    <button class="btn btn-secondary" @onclick="PrevPage" disabled="@(tripListRequest.PageNumber <= 1)">
+        Prev
+    </button>
+    <span>Page @tripListRequest.PageNumber</span>
+    <button class="btn btn-secondary" @onclick="NextPage">
+        Next
+    </button>
+</div>
+
+<!-- Modal for Trip Events -->
+@if (showEventsModal)
+{
+    <div class="modal-backdrop">
+        <div class="modal-box">
+            <h4>Events for Trip</h4>
+            <table class="table table-striped table-hover table-bordered">
+                <thead>
+                    <tr>
+                        <th>Event Date</th>
+                        <th>Event Type</th>
+                        <th>City</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (currentTripEvents?.Events != null)
+                    {
+                        foreach (var ev in currentTripEvents.Events)
+                        {
+                            <tr>
+                                <td>@ev.EventDate</td>
+                                <td>@ev.EquipmentEventTypeDescription</td>
+                                <td>@ev.CityName</td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+            <div class="modal-actions">
+                <button class="btn btn-info" @onclick="HideEventsModal">Close</button>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- TODO: Move to separate file -->
+@code {
+
+    private IBrowserFile? selectedFile;
+    private bool canUpload => selectedFile != null;
+
+    private string? uploadStatusMessage;
+
+    private TripListRequestDto tripListRequest = new()
+        {
+            PageSize = 10,
+            PageNumber = 1,
+            OrderBy = TripListRequestOrderBy.EquipmentIdAZ
+        };
+
+    private TripListResponseDto? tripListResponse;
+
+    private bool showEventsModal = false;
+    private TripEventListResponseDto? currentTripEvents;
+
+    [Inject]
+    private HttpClient Http { get; set; } = default!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await RefreshTrips();
+    }
+
+    private async Task OnOrderChanged(ChangeEventArgs e)
+    {
+        if (Enum.TryParse<TripListRequestOrderBy>(e.Value?.ToString(), out var newOrder))
+        {
+            tripListRequest.OrderBy = newOrder;
+        }
+        await RefreshTrips();
+    }
+
+    private void OnFileChange(InputFileChangeEventArgs e)
+    {
+        selectedFile = e.File;
+    }
+
+    private async Task UploadAndProcessFile()
+    {
+        if (selectedFile == null) return;
+
+        uploadStatusMessage = "Uploading file...";
+
+        try
+        {
+            using var content = new MultipartFormDataContent();
+            var fileContent = new StreamContent(selectedFile.OpenReadStream(
+                maxAllowedSize: ConstantValues.MaxFileSize));
+
+            content.Add(fileContent, "file", selectedFile.Name);
+
+            var uploadResponse = await Http.PostAsync("uploadEquipmentEvents", content);
+            if (!uploadResponse.IsSuccessStatusCode)
+            {
+                var errorMsg = await uploadResponse.Content.ReadAsStringAsync();
+                uploadStatusMessage = $"Error: Unable to upload file. Details:{errorMsg}";
+                return;
+            }
+
+            var fileId = await uploadResponse.Content.ReadFromJsonAsync<Guid>();
+            uploadStatusMessage = "File uploaded successfully. Processing...";
+            var processResponse = await Http.PostAsync($"processEquipmentEventFile/{fileId}", null);
+            if (!processResponse.IsSuccessStatusCode)
+            {
+                var errorMsg = await processResponse.Content.ReadAsStringAsync();
+                uploadStatusMessage = $"Error processing file. Details: {errorMsg}";
+                return;
+            }
+
+            uploadStatusMessage = "File processed successfully! Reloading trips...";
+            await RefreshTrips();
+            uploadStatusMessage = "Done.";
+        }
+        catch (Exception ex)
+        {
+            uploadStatusMessage = $"Error: {ex.Message}";
+        }
+    }
+
+    private async Task RefreshTrips()
+    {
+        var query = $"trips?PageNumber={tripListRequest.PageNumber}" +
+                    $"&PageSize={tripListRequest.PageSize}" +
+                    $"&OrderBy={tripListRequest.OrderBy}";
+
+        tripListResponse = await Http.GetFromJsonAsync<TripListResponseDto>(query);
+        StateHasChanged();
+    }
+
+    private async Task ShowTripEvents(Guid tripId)
+    {
+        currentTripEvents = await Http.GetFromJsonAsync<TripEventListResponseDto>($"trips/{tripId}/events");
+        showEventsModal = true;
+    }
+
+    private void HideEventsModal()
+    {
+        showEventsModal = false;
+    }
+
+    private async Task NextPage()
+    {
+        tripListRequest.PageNumber++;
+        await RefreshTrips();
+    }
+
+    private async Task PrevPage()
+    {
+        if (tripListRequest.PageNumber > 1)
+        {
+            tripListRequest.PageNumber--;
+            await RefreshTrips();
+        }
+    }
+}
