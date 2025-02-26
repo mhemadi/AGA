@@ -7,3 +7,7 @@ GET {{AltaGasAssignment.WebApi_HostAddress}}/init
 GET {{AltaGasAssignment.WebApi_HostAddress}}/trips?PageSize=7&pageNumber=1&OrderBy=ShortestTrip
 
 ###
+
+GET {{AltaGasAssignment.WebApi_HostAddress}}/trips/0752DAA0-D2DD-4BC3-840D-508604BE26B0/events
+
+###

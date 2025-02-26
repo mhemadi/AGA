@@ -49,5 +49,27 @@ namespace AltaGasAssignment.WebApi.Application.Services
 
             return new TripListResponseDto() { Trips = tripListDto };
         }
+        public async Task<TripEventListResponseDto> GetTripEvents(Guid tripId)
+        {
+            var events = await _dbContext.EquipmentEvents
+                .Include(x => x.City)
+                .Include(x => x.EquipmentEventType)
+                .Where(x => x.TripId == tripId)
+                .OrderBy(x => x.EventDate)
+                .ToListAsync();
+
+            var eventDtoList = events.Select(x => new TripEventResponseDto()
+            {
+                CityId = x.CityId,
+                CityName = x.City!.Name,
+                EquipmentEventTypeId = x.EquipmentEventTypeId,
+                EquipmentEventTypeDescription = x.EquipmentEventType!.EventDescription,
+                EventDate = x.EventDate,
+                Id = x.Id,
+                TripId = tripId
+            }).ToList();
+
+            return new TripEventListResponseDto() { Events = eventDtoList };
+        }
     }
 }

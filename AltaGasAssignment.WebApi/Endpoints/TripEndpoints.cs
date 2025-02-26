@@ -23,6 +23,13 @@ namespace AltaGasAssignment.WebApi.Endpoints
                 return Results.Ok(response);
             });
 
+            routes.MapGet("/trips/{tripId}/events", async (Guid tripId, TripService tripService) =>
+            {
+                //TODO: Exception handling
+                var response = await tripService.GetTripEvents(tripId);
+                return Results.Ok(response);
+            });
+
             return routes;
         }
     }
