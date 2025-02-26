@@ -1,4 +1,5 @@
-﻿using AltaGasAssignment.WebApi.Data;
+﻿using AltaGasAssignment.WebApi.Application.Services;
+using AltaGasAssignment.WebApi.Data;
 using Microsoft.EntityFrameworkCore;
 
 namespace AltaGasAssignment.WebApi.Application
@@ -10,6 +11,10 @@ namespace AltaGasAssignment.WebApi.Application
         {
             services.AddDbContext<AppDbContext>(options =>
                 options.UseSqlite(configuration.GetConnectionString("DefaultConnection")));
+
+            //TODO: Consider using interfaces
+            services.AddScoped<FileUploadService>();
+            services.AddScoped<EquipmentEventProcessor>();
 
             return services;
         }
