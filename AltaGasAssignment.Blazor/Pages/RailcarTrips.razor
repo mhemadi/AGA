@@ -80,8 +80,8 @@
     <button class="btn btn-secondary" @onclick="PrevPage" disabled="@(tripListRequest.PageNumber <= 1)">
         Prev
     </button>
-    <span>Page @tripListRequest.PageNumber</span>
-    <button class="btn btn-secondary" @onclick="NextPage">
+    <span class="px-3">Page @tripListRequest.PageNumber</span>
+    <button class="btn btn-secondary" @onclick="NextPage" disabled="@(lastPage)">
         Next
     </button>
 </div>
@@ -126,7 +126,7 @@
 
     private IBrowserFile? selectedFile;
     private bool canUpload => selectedFile != null;
-
+    private bool lastPage = true;
     private string? uploadStatusMessage;
 
     private TripListRequestDto tripListRequest = new()
@@ -212,6 +212,9 @@
                     $"&OrderBy={tripListRequest.OrderBy}";
 
         tripListResponse = await Http.GetFromJsonAsync<TripListResponseDto>(query);
+
+        lastPage = tripListResponse?.Trips?.Count == tripListRequest.PageSize ? false : true;
+
         StateHasChanged();
     }
 
