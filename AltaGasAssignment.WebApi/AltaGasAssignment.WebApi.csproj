@@ -8,8 +8,6 @@
 
   <ItemGroup>
     <Folder Include="Application\Validator\" />
-    <Folder Include="Application\Services\" />
-    <Folder Include="Data\Configuration\" />
   </ItemGroup>
 
   <ItemGroup>

@@ -10,6 +10,9 @@
 *.userosscache
 *.sln.docstates
 AltaGasAssignment.WebApi/Data/DB
+AltaGasAssignment.WebApi/Data/Uploads
+
+
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
