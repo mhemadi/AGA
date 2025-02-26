@@ -131,3 +131,8 @@ td {
     width: 300px;
     margin-left: 20px;
 }
+
+.spinner {
+    margin-left: 20px;
+    vertical-align: middle;
+}
