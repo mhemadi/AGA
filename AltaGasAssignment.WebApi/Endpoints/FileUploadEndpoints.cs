@@ -20,11 +20,6 @@ namespace AltaGasAssignment.WebApi.Endpoints
                     return Results.BadRequest("File size exceeds the limit (1MB).");
                 }
 
-                if (file.ContentType != "text/csv")
-                {
-                    return Results.BadRequest("Invalid file type. Only CSV files are allowed.");
-                }
-
                 var fileId = Guid.NewGuid();
                 var saveResult = await fileUploadService.SaveFile(file, fileId);
                 if (saveResult.Success == false)
