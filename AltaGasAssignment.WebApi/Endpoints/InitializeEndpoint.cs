@@ -11,9 +11,9 @@ namespace AltaGasAssignment.WebApi.Endpoints
             //Need to run this to initialize the database. 
             routes.MapGet("/init", async (AppDbContext dbContext) =>
             {
-                if (!Directory.Exists("DB"))
+                if (!Directory.Exists(@"Data\DB"))
                 {
-                    Directory.CreateDirectory("DB");
+                    Directory.CreateDirectory(@"Data\DB");
                 }
 
                 dbContext.Database.Migrate();

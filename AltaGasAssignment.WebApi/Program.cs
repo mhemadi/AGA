@@ -7,5 +7,6 @@ builder.Services.AddServices(builder.Configuration);
 var app = builder.Build();
 app.MapFileUploadEndpoints();
 app.MapTripEndpoints();
+app.MapInitializeEndpoints();
 
 app.Run();
