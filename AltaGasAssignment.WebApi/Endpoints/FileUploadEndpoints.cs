@@ -33,7 +33,7 @@ namespace AltaGasAssignment.WebApi.Endpoints
                 }
 
                 return Results.Ok(fileId);
-            });
+            }).DisableAntiforgery(); //TODO: Need to consider security in production
 
             routes.MapPost("/processEquipmentEventFile/{fileId}", async (Guid fileId,
                 EquipmentEventProcessor processor) =>
